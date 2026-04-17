@@ -1,50 +1,99 @@
-# Welcome to your Expo app 👋
+# EcoAlert
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile feito com Expo + React Native para registro e acompanhamento de denuncias ambientais.
 
-## Get started
+## Visao geral
 
-1. Install dependencies
+O EcoAlert conecta cidadas e cidadaos a um fluxo simples de denuncia, permitindo:
 
-   ```bash
-   npm install
-   ```
+- listar denuncias por ordem de criacao;
+- consultar categorias ativas;
+- autenticar usuarios via Supabase Auth;
+- criar e atualizar dados de perfil;
+- preparar criacao/gestao de denuncias com persistencia no Supabase.
 
-2. Start the app
+## Stack principal
 
-   ```bash
-   npx expo start
-   ```
+- Expo (SDK 54) + React Native
+- Expo Router (rotas baseadas em arquivos)
+- TypeScript
+- Supabase (`@supabase/supabase-js`)
+- SWR (cache e revalidacao de dados)
+- ESLint (via `expo lint`)
 
-In the output, you'll find options to open the app in a
+## Estrutura de pastas
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```txt
+src/
+  app/          # rotas com expo-router
+  screens/      # telas de dominio (login, perfil, detalhes)
+  hooks/        # hooks de dados (SWR + Supabase)
+  services/     # camada de acesso a dados/autenticacao
+  lib/          # clientes compartilhados (supabase client)
+  types/        # tipos de dominio e banco
+  components/   # componentes reutilizaveis
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Requisitos
 
-## Learn more
+- Node.js 18+
+- npm 9+
+- Expo CLI (opcional, pode usar `npx expo`)
+- Projeto Supabase configurado
 
-To learn more about developing your project with Expo, look at the following resources:
+## Configuracao do ambiente
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Crie (ou ajuste) o arquivo `.env` na raiz:
 
-## Join the community
+```env
+EXPO_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon_publica
+```
 
-Join our community of developers creating universal apps.
+2. Instale as dependencias:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install
+```
+
+## Como rodar
+
+```bash
+npm run start
+```
+
+Atalhos uteis:
+
+- `npm run android` para abrir no Android
+- `npm run ios` para abrir no iOS
+- `npm run web` para abrir no navegador
+
+## Scripts disponiveis
+
+- `npm run start` inicia o projeto com Expo
+- `npm run android` inicia com alvo Android
+- `npm run ios` inicia com alvo iOS
+- `npm run web` inicia com alvo Web
+- `npm run lint` executa o lint
+- `npm run reset-project` reseta estrutura base do template Expo
+
+## Integracao com Supabase
+
+O cliente do Supabase fica centralizado em `src/lib/supabase.ts` e e consumido por servicos como:
+
+- `src/services/auth.ts` (cadastro, login, logout, usuario atual)
+- `src/services/profiles.ts` (consulta/atualizacao de perfil)
+- `src/services/denuncias.ts` (criacao/atualizacao/remocao de denuncias)
+
+## Qualidade e boas praticas
+
+- Execute `npm run lint` antes de abrir PR.
+- Nao versione secrets ou chaves privadas.
+- Prefira organizar novas regras de negocio em `services/` e consumo em `hooks/`.
+
+## Roadmap (sugestao)
+
+- formulario completo de criacao de denuncia;
+- upload de imagens para storage;
+- filtros por status/categoria;
+- notificacoes e acompanhamento de andamento da denuncia.
