@@ -1,99 +1,101 @@
 # EcoAlert
 
-Aplicativo mobile feito com Expo + React Native para registro e acompanhamento de denuncias ambientais.
+App mobile com foco em denuncias ambientais, construido com Expo + React Native e backend no Supabase.
 
-## Visao geral
+## O que o projeto faz hoje
 
-O EcoAlert conecta cidadas e cidadaos a um fluxo simples de denuncia, permitindo:
+- lista denuncias com dados vindos do Supabase;
+- cadastra novas denuncias;
+- registra usuarios via Supabase Auth;
+- possui base para perfil de usuario e categorias;
+- utiliza cache de dados com SWR.
 
-- listar denuncias por ordem de criacao;
-- consultar categorias ativas;
-- autenticar usuarios via Supabase Auth;
-- criar e atualizar dados de perfil;
-- preparar criacao/gestao de denuncias com persistencia no Supabase.
+> Status: MVP em desenvolvimento ativo.
 
-## Stack principal
+## Stack
 
 - Expo (SDK 54) + React Native
-- Expo Router (rotas baseadas em arquivos)
+- Expo Router (file-based routing)
 - TypeScript
+- Tamagui (UI)
+- SWR (fetching e cache)
 - Supabase (`@supabase/supabase-js`)
-- SWR (cache e revalidacao de dados)
-- ESLint (via `expo lint`)
+- ESLint (`expo lint`)
 
-## Estrutura de pastas
+## Estrutura do projeto
 
 ```txt
 src/
-  app/          # rotas com expo-router
+  app/          # rotas do expo-router
   screens/      # telas de dominio (login, perfil, detalhes)
-  hooks/        # hooks de dados (SWR + Supabase)
-  services/     # camada de acesso a dados/autenticacao
-  lib/          # clientes compartilhados (supabase client)
-  types/        # tipos de dominio e banco
-  components/   # componentes reutilizaveis
+  hooks/        # hooks de dados (SWR)
+  services/     # integracao com Supabase (auth, perfil, denuncias)
+  lib/          # clientes compartilhados
+  types/        # tipos de dominio/banco
+  components/   # componentes reutilizaveis de UI
 ```
 
 ## Requisitos
 
 - Node.js 18+
 - npm 9+
-- Expo CLI (opcional, pode usar `npx expo`)
-- Projeto Supabase configurado
+- conta/projeto no Supabase
 
-## Configuracao do ambiente
+## Configuracao de ambiente
 
-1. Crie (ou ajuste) o arquivo `.env` na raiz:
+Crie um arquivo `.env` na raiz:
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=sua_url_do_supabase
 EXPO_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon_publica
 ```
 
-2. Instale as dependencias:
+Depois instale as dependencias:
 
 ```bash
 npm install
 ```
 
-## Como rodar
+## Rodando o app
 
 ```bash
 npm run start
 ```
 
-Atalhos uteis:
+Comandos uteis:
 
-- `npm run android` para abrir no Android
-- `npm run ios` para abrir no iOS
-- `npm run web` para abrir no navegador
+- `npm run android`
+- `npm run ios`
+- `npm run web`
 
-## Scripts disponiveis
+## Scripts
 
-- `npm run start` inicia o projeto com Expo
-- `npm run android` inicia com alvo Android
-- `npm run ios` inicia com alvo iOS
-- `npm run web` inicia com alvo Web
-- `npm run lint` executa o lint
-- `npm run reset-project` reseta estrutura base do template Expo
+- `npm run start`: inicia o Expo dev server
+- `npm run android`: abre no Android
+- `npm run ios`: abre no iOS
+- `npm run web`: abre no navegador
+- `npm run lint`: executa lint
+- `npm run reset-project`: reseta o projeto base do template
 
 ## Integracao com Supabase
 
-O cliente do Supabase fica centralizado em `src/lib/supabase.ts` e e consumido por servicos como:
+Cliente central: `src/lib/supabase.ts`.
 
-- `src/services/auth.ts` (cadastro, login, logout, usuario atual)
-- `src/services/profiles.ts` (consulta/atualizacao de perfil)
-- `src/services/denuncias.ts` (criacao/atualizacao/remocao de denuncias)
+Camadas de servico:
 
-## Qualidade e boas praticas
+- `src/services/auth.ts`: sign up, sign in, sign out e usuario atual
+- `src/services/profiles.ts`: leitura e atualizacao de perfil
+- `src/services/denuncias.ts`: criacao, atualizacao de status e remocao de denuncias
 
-- Execute `npm run lint` antes de abrir PR.
-- Nao versione secrets ou chaves privadas.
-- Prefira organizar novas regras de negocio em `services/` e consumo em `hooks/`.
+## Boas praticas
 
-## Roadmap (sugestao)
+- rode `npm run lint` antes de commit/PR;
+- nao versionar secrets;
+- mantenha regras de negocio em `services/` e consumo em `hooks/`.
+
+## Proximos passos sugeridos
 
 - formulario completo de criacao de denuncia;
-- upload de imagens para storage;
-- filtros por status/categoria;
-- notificacoes e acompanhamento de andamento da denuncia.
+- upload de imagem para storage;
+- filtros por categoria/status;
+- fluxo de autenticacao completo na UI.

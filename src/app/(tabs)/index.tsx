@@ -58,7 +58,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView>
       <YStack gap='$4' paddingVertical={20}>
-        <Title text=' EcoAlerts 🌱' />
+        <Title text=' EcoAlerts 🌱' alignSelf='center' />
         <Text>Total de denuncias: {isLoading ? 'Carregando' : denuncias.length}</Text>
         <Button alignSelf="center" icon={Plus} iconSize={40} height={50} theme='light' onPress={handleCreate}>
           <Text fontSize={20}>Criar denuncia</Text>
