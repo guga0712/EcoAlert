@@ -1,72 +1,85 @@
-import { supabase } from '../lib/supabase'
+import { supabase } from "../lib/supabase";
 
 type SignUpInput = {
-  nome: string
-  email: string
-  password: string
-}
+  nome: string;
+  email: string;
+  password: string;
+};
 
 type SignInInput = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export async function signUp({ nome, email, password }: SignUpInput) {
-  const { data, error } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
-  })
+    options: {
+      data: {
+        nome,
+      },
+    },
+  });
 
-  if (error) {
-    throw error
+  if (signUpError) {
+    throw signUpError;
   }
 
-  const user = data.user
+  const user = signUpData.user;
 
   if (!user) {
-    throw new Error('Usuário não retornado no cadastro.')
+    throw new Error("Usuário não retornado no cadastro.");
   }
 
-  const { error: profileError } = await supabase.from('profiles').insert({
+  const { error: profileError } = await supabase.from("profiles").insert({
     id: user.id,
     nome,
     email: user.email ?? email,
-  })
+  });
 
   if (profileError) {
-    throw profileError
+    throw new Error(
+      `Usuário criado no Auth, mas falhou ao criar profile: ${profileError.message}`,
+    );
   }
 
-  return data
+  return {
+    user,
+    session: signUpData.session,
+  };
 }
 
 export async function signIn({ email, password }: SignInInput) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-  })
+  });
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data
+  return {
+    user: data.user,
+    session: data.session,
+  };
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
+  const { error } = await supabase.auth.signOut();
 
   if (error) {
-    throw error
+    throw error;
   }
 }
 
 export async function getCurrentUser() {
-  const { data, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser();
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data.user
+  return data.user;
 }
