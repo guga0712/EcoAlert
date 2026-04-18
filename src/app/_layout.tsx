@@ -5,12 +5,9 @@ import 'react-native-reanimated';
 import { SWRConfig } from 'swr';
 import { TamaguiProvider } from 'tamagui';
 
+import { AuthProvider } from '@/src/contexts/auth';
 import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import tamaguiConfig from '@/tamagui.config';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -24,10 +21,14 @@ export default function RootLayout() {
     >
       <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === 'dark' ? 'dark' : 'light'}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </Stack>
+          <AuthProvider>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            </Stack>
+          </AuthProvider>
           <StatusBar style="auto" />
         </ThemeProvider>
       </TamaguiProvider>
