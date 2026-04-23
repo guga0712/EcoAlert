@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Camera, Pencil } from '@tamagui/lucide-icons-2';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
@@ -147,7 +147,7 @@ export default function ProfileScreen() {
               >
                 {uploadingAvatar
                   ? <Spinner size="small" color="#fff" />
-                  : <Ionicons name="camera" size={14} color="#fff" />
+                  : <Camera size={14} color="#fff" />
                 }
               </View>
             </View>
@@ -274,7 +274,7 @@ export default function ProfileScreen() {
               pressStyle={{ opacity: 0.85, backgroundColor: '#256427' }}
             >
               <XStack alignItems="center" gap="$2">
-                <Ionicons name="pencil" size={16} color="#fff" />
+                <Pencil size={16} color="#fff" />
                 <Text color="#fff" fontWeight="700" fontSize={16}>Editar perfil</Text>
               </XStack>
             </Button>

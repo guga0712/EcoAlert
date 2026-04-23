@@ -1,4 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Camera,
+  CircleAlert,
+  CircleX,
+  Droplets,
+  Flame,
+  Leaf,
+  MapPin,
+  Pencil,
+  TriangleAlert,
+  Trash2,
+  Wrench,
+  X,
+} from '@tamagui/lucide-icons-2';
+import type React from 'react';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,21 +39,23 @@ import { supabase } from '@/src/lib/supabase';
 import { createDenuncia } from '@/src/services/denuncias';
 import { uploadDenunciaImageFromUri } from '@/src/services/storage';
 
-function getCategoryStyle(nome: string) {
+type IconComponent = React.ComponentType<{ size?: number; color?: string }>;
+
+function getCategoryStyle(nome: string): { Icon: IconComponent; color: string } {
   const n = nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   if (n.includes('alagamento') || n.includes('enchente') || n.includes('inundacao'))
-    return { icon: 'water' as const, color: '#1565c0' };
+    return { Icon: Droplets, color: '#1565c0' };
   if (n.includes('arvore') || n.includes('vegeta') || n.includes('galho'))
-    return { icon: 'leaf' as const, color: '#388e3c' };
+    return { Icon: Leaf, color: '#388e3c' };
   if (n.includes('buraco') || n.includes('calcada') || n.includes('estrada') || n.includes('via'))
-    return { icon: 'construct' as const, color: '#e65100' };
+    return { Icon: Wrench, color: '#e65100' };
   if (n.includes('lixo') || n.includes('entulho') || n.includes('descarte'))
-    return { icon: 'trash' as const, color: '#6a1b9a' };
+    return { Icon: Trash2, color: '#6a1b9a' };
   if (n.includes('deslizamento') || n.includes('erosao'))
-    return { icon: 'warning' as const, color: '#795548' };
-  if (n.includes('queimada') || n.includes('erosao'))
-    return { icon: 'bonfire' as const, color: '#795548' };
-  return { icon: 'alert-circle' as const, color: '#37474f' };
+    return { Icon: TriangleAlert, color: '#795548' };
+  if (n.includes('queimada') || n.includes('incendio'))
+    return { Icon: Flame, color: '#bf360c' };
+  return { Icon: CircleAlert, color: '#37474f' };
 }
 
 export default function NovaOcorrenciaScreen() {
@@ -56,8 +72,15 @@ export default function NovaOcorrenciaScreen() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addressMode, setAddressMode] = useState<'auto' | 'manual'>('auto');
+  const [manualStreet, setManualStreet] = useState('');
+  const [manualCity, setManualCity] = useState('');
+  const [manualState, setManualState] = useState('');
   const [tituloFocused, setTituloFocused] = useState(false);
   const [descricaoFocused, setDescricaoFocused] = useState(false);
+  const [streetFocused, setStreetFocused] = useState(false);
+  const [cityFocused, setCityFocused] = useState(false);
+  const [stateFocused, setStateFocused] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -98,7 +121,15 @@ export default function NovaOcorrenciaScreen() {
     if (!selectedCatId) { Alert.alert('Atenção', 'Selecione uma categoria.'); return; }
     if (!titulo.trim()) { Alert.alert('Atenção', 'Informe um título.'); return; }
     if (!descricao.trim()) { Alert.alert('Atenção', 'Informe uma descrição.'); return; }
-    if (!location) { Alert.alert('Atenção', 'Localização não disponível.'); return; }
+
+    if (addressMode === 'manual' && (!manualStreet.trim() || !manualCity.trim())) {
+      Alert.alert('Atenção', 'Informe pelo menos a rua e a cidade.');
+      return;
+    }
+    if (addressMode === 'auto' && !location) {
+      Alert.alert('Atenção', 'Localização não disponível.');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -109,14 +140,34 @@ export default function NovaOcorrenciaScreen() {
       let fotoUrl: string | null = null;
       if (photoUri) fotoUrl = await uploadDenunciaImageFromUri(photoUri);
 
+      let latitude = location?.coords.latitude ?? 0;
+      let longitude = location?.coords.longitude ?? 0;
+
+      const addressParts = [manualStreet.trim(), manualCity.trim(), manualState.trim()].filter(Boolean);
+      const finalAddress = addressMode === 'manual'
+        ? addressParts.join(', ')
+        : address;
+
+      if (addressMode === 'manual') {
+        const query = [...addressParts, 'Brasil'].join(', ');
+        const geocoded = await Location.geocodeAsync(query);
+        if (geocoded.length > 0) {
+          latitude = geocoded[0].latitude;
+          longitude = geocoded[0].longitude;
+        } else if (!location) {
+          Alert.alert('Atenção', 'Não foi possível encontrar as coordenadas desse endereço. Verifique os campos e tente novamente.');
+          return;
+        }
+      }
+
       await createDenuncia({
         user_id: userId,
         categoria_id: selectedCatId,
         titulo: titulo.trim(),
         descricao: descricao.trim(),
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        endereco: address,
+        latitude,
+        longitude,
+        endereco: finalAddress,
         foto_url: fotoUrl,
       });
 
@@ -138,7 +189,7 @@ export default function NovaOcorrenciaScreen() {
       <View style={styles.modalHeader}>
         <Text style={styles.modalTitle}>Nova Ocorrência</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <Ionicons name="close" size={18} color="#6b7c6f" />
+          <X size={18} color="#6b7c6f" />
         </Pressable>
       </View>
 
@@ -161,7 +212,7 @@ export default function NovaOcorrenciaScreen() {
               contentContainerStyle={styles.chipRow}
             >
               {categorias.map(cat => {
-                const { icon, color } = getCategoryStyle(cat.nome);
+                const { Icon, color } = getCategoryStyle(cat.nome);
                 const active = selectedCatId === cat.id;
                 return (
                   <Pressable
@@ -174,7 +225,7 @@ export default function NovaOcorrenciaScreen() {
                         : { backgroundColor: '#fff', borderColor: '#c8dfc8' },
                     ]}
                   >
-                    <Ionicons name={icon} size={14} color={active ? '#fff' : color} />
+                    <Icon size={14} color={active ? '#fff' : color} />
                     <Text style={[styles.chipText, { color: active ? '#fff' : '#3a5c40' }]}>
                       {cat.nome}
                     </Text>
@@ -188,8 +239,7 @@ export default function NovaOcorrenciaScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>Título</Text>
             <View style={[styles.inputRow, { borderColor: tituloFocused ? '#2e7d32' : '#b0ccb4' }]}>
-              <Ionicons
-                name="pencil-outline"
+              <Pencil
                 size={16}
                 color={tituloFocused ? '#2e7d32' : '#9e9e9e'}
                 style={{ marginRight: 8 }}
@@ -228,26 +278,96 @@ export default function NovaOcorrenciaScreen() {
           {/* Localização */}
           <View style={styles.section}>
             <Text style={styles.label}>Localização</Text>
-            <View style={styles.locationBox}>
-              {loadingLocation ? (
-                <>
-                  <Spinner size="small" color="#2e7d32" />
-                  <Text style={styles.locationMuted}>Obtendo localização...</Text>
-                </>
-              ) : location ? (
-                <>
-                  <Ionicons name="location" size={18} color="#2e7d32" style={{ marginRight: 8 }} />
-                  <Text style={styles.locationText} numberOfLines={2}>
-                    {address ?? `${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}`}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons name="location-outline" size={18} color="#e53935" style={{ marginRight: 8 }} />
-                  <Text style={{ fontSize: 14, color: '#e53935' }}>Localização não disponível</Text>
-                </>
-              )}
+
+            {/* Toggle */}
+            <View style={styles.addressToggle}>
+              <Pressable
+                style={[styles.toggleBtn, addressMode === 'auto' && styles.toggleBtnActive]}
+                onPress={() => setAddressMode('auto')}
+              >
+                <MapPin size={13} color={addressMode === 'auto' ? '#fff' : '#3a5c40'} />
+                <Text style={[styles.toggleText, addressMode === 'auto' && styles.toggleTextActive]}>
+                  Usar atual
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.toggleBtn, addressMode === 'manual' && styles.toggleBtnActive]}
+                onPress={() => setAddressMode('manual')}
+              >
+                <Pencil size={13} color={addressMode === 'manual' ? '#fff' : '#3a5c40'} />
+                <Text style={[styles.toggleText, addressMode === 'manual' && styles.toggleTextActive]}>
+                  Digitar
+                </Text>
+              </Pressable>
             </View>
+
+            {/* Conteúdo conforme modo */}
+            {addressMode === 'auto' ? (
+              <View style={styles.locationBox}>
+                {loadingLocation ? (
+                  <>
+                    <Spinner size="small" color="#2e7d32" />
+                    <Text style={styles.locationMuted}>Obtendo localização...</Text>
+                  </>
+                ) : location ? (
+                  <>
+                    <MapPin size={18} color="#2e7d32" style={{ marginRight: 8 }} />
+                    <Text style={styles.locationText} numberOfLines={2}>
+                      {address ?? `${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}`}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <MapPin size={18} color="#e53935" style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 14, color: '#e53935' }}>Localização não disponível</Text>
+                  </>
+                )}
+              </View>
+            ) : (
+              <View style={styles.manualFields}>
+                {/* Rua */}
+                <View style={[styles.inputRow, { borderColor: streetFocused ? '#2e7d32' : '#b0ccb4' }]}>
+                  <MapPin size={16} color={streetFocused ? '#2e7d32' : '#9e9e9e'} style={{ marginRight: 8 }} />
+                  <TextInput
+                    value={manualStreet}
+                    onChangeText={setManualStreet}
+                    placeholder="Rua, número e bairro"
+                    placeholderTextColor="#b0b8b0"
+                    onFocus={() => setStreetFocused(true)}
+                    onBlur={() => setStreetFocused(false)}
+                    style={styles.textInput}
+                  />
+                </View>
+
+                {/* Cidade + Estado lado a lado */}
+                <View style={styles.cityStateRow}>
+                  <View style={[styles.inputRow, styles.cityInput, { borderColor: cityFocused ? '#2e7d32' : '#b0ccb4' }]}>
+                    <TextInput
+                      value={manualCity}
+                      onChangeText={setManualCity}
+                      placeholder="Cidade"
+                      placeholderTextColor="#b0b8b0"
+                      onFocus={() => setCityFocused(true)}
+                      onBlur={() => setCityFocused(false)}
+                      style={styles.textInput}
+                    />
+                  </View>
+                  <View style={[styles.inputRow, styles.stateInput, { borderColor: stateFocused ? '#2e7d32' : '#b0ccb4' }]}>
+                    <TextInput
+                      value={manualState}
+                      onChangeText={setManualState}
+                      placeholder="UF"
+                      placeholderTextColor="#b0b8b0"
+                      autoCapitalize="characters"
+                      maxLength={2}
+                      onFocus={() => setStateFocused(true)}
+                      onBlur={() => setStateFocused(false)}
+                      style={[styles.textInput, { textAlign: 'center' }]}
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Foto */}
@@ -264,12 +384,12 @@ export default function NovaOcorrenciaScreen() {
                   contentFit="cover"
                 />
                 <Pressable onPress={() => setPhotoUri(null)} style={styles.removePhoto}>
-                  <Ionicons name="close-circle" size={26} color="#e53935" />
+                  <CircleX size={26} color="#e53935" />
                 </Pressable>
               </View>
             ) : (
               <Pressable onPress={handlePickPhoto} style={styles.photoPlaceholder}>
-                <Ionicons name="camera-outline" size={28} color="#9e9e9e" />
+                <Camera size={28} color="#9e9e9e" />
                 <Text style={styles.photoPlaceholderText}>Adicionar foto</Text>
               </Pressable>
             )}
@@ -403,6 +523,46 @@ const styles = StyleSheet.create({
     color: '#1b2e1f',
     minHeight: 96,
     textAlignVertical: 'top',
+  },
+  addressToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#e8f5e9',
+    borderRadius: 10,
+    padding: 3,
+    marginBottom: 10,
+  },
+  toggleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  toggleBtnActive: {
+    backgroundColor: '#2e7d32',
+  },
+  toggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#3a5c40',
+  },
+  toggleTextActive: {
+    color: '#fff',
+  },
+  manualFields: {
+    gap: 8,
+  },
+  cityStateRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cityInput: {
+    flex: 3,
+  },
+  stateInput: {
+    flex: 1,
   },
   locationBox: {
     flexDirection: 'row',

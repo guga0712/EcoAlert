@@ -1,5 +1,6 @@
 import { signIn, signUp } from "@/src/services/auth";
 import { Ionicons } from '@expo/vector-icons';
+import { Eye, EyeOff, Lock, Mail, User } from '@tamagui/lucide-icons-2';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -185,7 +186,7 @@ export default function LoginScreen() {
                   Nome
                 </Label>
                 <XStack {...inputContainerProps(nomeFocused)}>
-                  <Ionicons name="person-outline" size={18} color={nomeFocused ? '#2e7d32' : '#9e9e9e'} />
+                  <User size={18} color={nomeFocused ? '#2e7d32' : '#9e9e9e'} />
                   <TextInput
                     value={nome}
                     onChangeText={setNome}
@@ -205,7 +206,7 @@ export default function LoginScreen() {
                 E-mail
               </Label>
               <XStack {...inputContainerProps(emailFocused)}>
-                <Ionicons name="mail-outline" size={18} color={emailFocused ? '#2e7d32' : '#9e9e9e'} />
+                <Mail size={18} color={emailFocused ? '#2e7d32' : '#9e9e9e'} />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -226,7 +227,7 @@ export default function LoginScreen() {
                 Senha
               </Label>
               <XStack {...inputContainerProps(passwordFocused)}>
-                <Ionicons name="lock-closed-outline" size={18} color={passwordFocused ? '#2e7d32' : '#9e9e9e'} />
+                <Lock size={18} color={passwordFocused ? '#2e7d32' : '#9e9e9e'} />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
@@ -237,12 +238,9 @@ export default function LoginScreen() {
                   onBlur={() => setPasswordFocused(false)}
                   style={{ flex: 1, fontSize: 15, color: '#1b2e1f', marginLeft: 8 }}
                 />
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={18}
-                  color="#9e9e9e"
-                  onPress={() => setShowPassword(v => !v)}
-                />
+                <Pressable onPress={() => setShowPassword(v => !v)}>
+                  {showPassword ? <EyeOff size={18} color="#9e9e9e" /> : <Eye size={18} color="#9e9e9e" />}
+                </Pressable>
               </XStack>
             </YStack>
           </YStack>

@@ -1,35 +1,55 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  CircleAlert,
+  Droplets,
+  Flame,
+  Leaf,
+  Locate,
+  MapPin,
+  Plus,
+  Trash2,
+  TriangleAlert,
+  Wrench,
+  X,
+} from '@tamagui/lucide-icons-2';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Header from '@/src/components/Header';
 import { useDenuncias } from '@/src/hooks/useDenuncias';
 import type { DenunciaWithCategoria } from '@/src/types/database';
 
-function getCategoryStyle(nome: string) {
+type IconComponent = React.ComponentType<{ size?: number; color?: string }>;
+
+function getCategoryStyle(nome: string): { Icon: IconComponent; color: string } {
   const n = nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   if (n.includes('alagamento') || n.includes('enchente') || n.includes('inundacao'))
-    return { icon: 'water' as const, color: '#1565c0' };
+    return { Icon: Droplets, color: '#1565c0' };
   if (n.includes('arvore') || n.includes('vegeta') || n.includes('galho'))
-    return { icon: 'leaf' as const, color: '#388e3c' };
+    return { Icon: Leaf, color: '#388e3c' };
   if (n.includes('buraco') || n.includes('calcada') || n.includes('estrada') || n.includes('via'))
-    return { icon: 'construct' as const, color: '#e65100' };
+    return { Icon: Wrench, color: '#e65100' };
   if (n.includes('lixo') || n.includes('entulho') || n.includes('descarte'))
-    return { icon: 'trash' as const, color: '#6a1b9a' };
+    return { Icon: Trash2, color: '#6a1b9a' };
   if (n.includes('deslizamento') || n.includes('erosao'))
-    return { icon: 'warning' as const, color: '#795548' };
-  return { icon: 'alert-circle' as const, color: '#37474f' };
+    return { Icon: TriangleAlert, color: '#795548' };
+  if (n.includes('queimada') || n.includes('incendio'))
+    return { Icon: Flame, color: '#bf360c' };
+  return { Icon: CircleAlert, color: '#37474f' };
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -58,10 +78,13 @@ const SP_REGION = {
 
 export default function MapsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const { denuncias } = useDenuncias();
   const [selected, setSelected] = useState<DenunciaWithCategoria | null>(null);
+  const [detailVisible, setDetailVisible] = useState(false);
   const cardAnim = useRef(new Animated.Value(0)).current;
+  const justPressedMarker = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -78,6 +101,8 @@ export default function MapsScreen() {
   }, []);
 
   function selectMarker(d: DenunciaWithCategoria) {
+    justPressedMarker.current = true;
+    setTimeout(() => { justPressedMarker.current = false; }, 300);
     setSelected(d);
     Animated.spring(cardAnim, {
       toValue: 1,
@@ -88,6 +113,7 @@ export default function MapsScreen() {
   }
 
   function dismissCard() {
+    if (justPressedMarker.current) return;
     Animated.timing(cardAnim, {
       toValue: 0,
       duration: 180,
@@ -130,7 +156,7 @@ export default function MapsScreen() {
         customMapStyle={MAP_STYLE}
       >
         {denuncias.map(d => {
-          const { icon, color } = getCategoryStyle(d.categorias?.nome ?? '');
+          const { Icon, color } = getCategoryStyle(d.categorias?.nome ?? '');
           return (
             <Marker
               key={d.id}
@@ -138,9 +164,9 @@ export default function MapsScreen() {
               onPress={() => selectMarker(d)}
               tracksViewChanges={false}
             >
-              <View style={styles.markerWrapper}>
+              <View style={styles.markerWrapper} pointerEvents="none">
                 <View style={[styles.markerBubble, { backgroundColor: color }]}>
-                  <Ionicons name={icon} size={16} color="#fff" />
+                  <Icon size={16} color="#fff" />
                 </View>
                 <View style={[styles.markerTip, { borderTopColor: color }]} />
               </View>
@@ -159,51 +185,126 @@ export default function MapsScreen() {
         onPress={goToMyLocation}
         style={({ pressed }) => [styles.locationBtn, { opacity: pressed ? 0.8 : 1 }]}
       >
-        <Ionicons name="locate" size={22} color="#2e7d32" />
+        <Locate size={22} color="#2e7d32" />
       </Pressable>
 
-      {/* Card de ocorrência selecionada */}
+      {/* Card preview */}
       {selected && selectedStyle && (
         <Animated.View
           style={[styles.card, { transform: [{ translateY: cardTranslateY }] }]}
         >
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: selectedStyle.color + '22' }]}>
-              <Ionicons name={selectedStyle.icon} size={20} color={selectedStyle.color} />
-            </View>
-            <View style={styles.cardTitleBlock}>
-              <Text style={styles.cardCategory}>
-                {selected.categorias?.nome ?? 'Ocorrência'}
-              </Text>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {selected.titulo}
-              </Text>
-            </View>
-            <Pressable onPress={dismissCard} style={styles.cardCloseBtn}>
-              <Ionicons name="close" size={18} color="#9e9e9e" />
-            </Pressable>
-          </View>
-
-          <Text style={styles.cardDesc} numberOfLines={2}>
-            {selected.descricao}
-          </Text>
-
-          <View style={styles.cardFooter}>
-            <View style={[styles.statusBadge, { backgroundColor: STATUS_BG[selected.status] }]}>
-              <Text style={[styles.statusText, { color: STATUS_FG[selected.status] }]}>
-                {STATUS_LABEL[selected.status]}
-              </Text>
-            </View>
-            {selected.endereco ? (
-              <View style={styles.addressRow}>
-                <Ionicons name="location-outline" size={12} color="#9e9e9e" />
-                <Text style={styles.addressText} numberOfLines={1}>
-                  {selected.endereco}
+          <Pressable style={styles.cardTouchable} onPress={() => setDetailVisible(true)}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.cardIconBox, { backgroundColor: selectedStyle.color + '22' }]}>
+                <selectedStyle.Icon size={20} color={selectedStyle.color} />
+              </View>
+              <View style={styles.cardTitleBlock}>
+                <Text style={styles.cardCategory}>
+                  {selected.categorias?.nome ?? 'Ocorrência'}
+                </Text>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {selected.titulo}
                 </Text>
               </View>
-            ) : null}
-          </View>
+              <Pressable onPress={dismissCard} style={styles.cardCloseBtn} hitSlop={8}>
+                <X size={18} color="#9e9e9e" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.cardDesc} numberOfLines={2}>
+              {selected.descricao}
+            </Text>
+
+            <View style={styles.cardFooter}>
+              <View style={[styles.statusBadge, { backgroundColor: STATUS_BG[selected.status] }]}>
+                <Text style={[styles.statusText, { color: STATUS_FG[selected.status] }]}>
+                  {STATUS_LABEL[selected.status]}
+                </Text>
+              </View>
+              <Text style={styles.detailHint}>Toque para ver detalhes →</Text>
+            </View>
+          </Pressable>
         </Animated.View>
+      )}
+
+      {/* Modal de detalhes */}
+      {selected && selectedStyle && (
+        <Modal
+          visible={detailVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setDetailVisible(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setDetailVisible(false)} />
+          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 16 }]}>
+            {/* Handle */}
+            <View style={styles.modalHandle} />
+
+            {/* Cabeçalho */}
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalIconBox, { backgroundColor: selectedStyle.color + '18' }]}>
+                <selectedStyle.Icon size={22} color={selectedStyle.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalCategoryLabel}>
+                  {selected.categorias?.nome ?? 'Ocorrência'}
+                </Text>
+                <Text style={styles.modalTitle} numberOfLines={2}>
+                  {selected.titulo}
+                </Text>
+              </View>
+              <Pressable onPress={() => setDetailVisible(false)} style={styles.modalCloseBtn}>
+                <X size={18} color="#6b7c6f" />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 4 }}>
+              {/* Status */}
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Status</Text>
+                <View style={[styles.statusBadgeLg, { backgroundColor: STATUS_BG[selected.status] }]}>
+                  <View style={[styles.statusDot, { backgroundColor: STATUS_FG[selected.status] }]} />
+                  <Text style={[styles.statusTextLg, { color: STATUS_FG[selected.status] }]}>
+                    {STATUS_LABEL[selected.status]}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.divider} />
+
+              {/* Descrição */}
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Descrição</Text>
+                <Text style={styles.detailValue}>{selected.descricao}</Text>
+              </View>
+
+              {/* Endereço */}
+              {selected.endereco && (
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Endereço</Text>
+                    <View style={styles.addressRowLg}>
+                      <MapPin size={14} color="#2e7d32" style={{ marginTop: 2 }} />
+                      <Text style={styles.detailValue}>{selected.endereco}</Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {/* Data */}
+              <View style={styles.divider} />
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Registrada em</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(selected.created_at).toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: 'long', year: 'numeric',
+                  })}
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </Modal>
       )}
 
       {/* FAB */}
@@ -217,7 +318,7 @@ export default function MapsScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.fabGradient}
         >
-          <Ionicons name="add" size={30} color="#fff" />
+          <Plus size={30} color="#fff" />
         </LinearGradient>
       </Pressable>
     </View>
@@ -355,6 +456,122 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9e9e9e',
     maxWidth: 180,
+  },
+  cardTouchable: {
+    flex: 1,
+  },
+  detailHint: {
+    fontSize: 12,
+    color: '#2e7d32',
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  modalSheet: {
+    backgroundColor: '#f5faf6',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    maxHeight: '75%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 16,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#c8dfc8',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e8f5e9',
+  },
+  modalIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCategoryLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6b7c6f',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1b2e1f',
+    lineHeight: 22,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e8f5e9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailRow: {
+    paddingVertical: 14,
+    gap: 6,
+  },
+  detailLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9e9e9e',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#1b2e1f',
+    lineHeight: 20,
+    flex: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e8f5e9',
+  },
+  statusBadgeLg: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  statusTextLg: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  addressRowLg: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    flex: 1,
   },
   fab: {
     position: 'absolute',
