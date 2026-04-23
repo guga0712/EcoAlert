@@ -49,6 +49,16 @@ export default function LoginScreen() {
   }
 
   async function handleLogin() {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha todos os campos para entrar.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert("Erro", "Digite um e-mail válido.");
+      return;
+    }
+
     try {
       const result = await signIn({ email, password });
       console.log('Login:', result);
@@ -63,6 +73,21 @@ export default function LoginScreen() {
   }
 
   async function handleRegister() {
+    if (!nome || !email || !password) {
+      Alert.alert("Erro", "Preencha todos os campos para criar uma conta.");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Erro", "A senha deve conter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert("Erro", "Digite um e-mail válido.");
+      return;
+    }
+
     try {
       const result = await signUp({ nome, email, password });
       console.log('Cadastro:', result);
@@ -72,6 +97,7 @@ export default function LoginScreen() {
       );
       router.replace('/(tabs)');
     } catch (error: any) {
+      console.error('Erro no cadastro:', error);
       Alert.alert("Erro", 'Tente novamente');
     }
   }
