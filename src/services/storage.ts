@@ -37,6 +37,7 @@ export async function uploadAvatarImage(
   const fileName = `${userId}/avatar.${ext}`;
 
   const response = await fetch(uri);
+  console.log(response);
   const arrayBuffer = await response.arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
@@ -52,5 +53,5 @@ export async function uploadAvatarImage(
 
   const { data } = supabase.storage.from("avatares").getPublicUrl(fileName);
 
-  return data.publicUrl;
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
