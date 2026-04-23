@@ -6,7 +6,7 @@ import { swrKeys } from "../utils/swrKeys";
 async function fetchDenuncias(): Promise<DenunciaWithCategoria[]> {
   const { data, error } = await supabase
     .from("denuncias")
-    .select("*")
+    .select("*, categorias(id, nome)")
     .order("created_at", { ascending: false });
 
   if (error) {

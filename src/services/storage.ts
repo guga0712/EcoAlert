@@ -28,6 +28,24 @@ export async function uploadDenunciaImage({
   return data.publicUrl;
 }
 
+export async function uploadDenunciaImageFromUri(uri: string): Promise<string> {
+  const ext = uri.split('.').pop()?.split('?')[0] ?? 'jpg';
+  const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+  const fileName = `denuncia-${Date.now()}.${ext}`;
+
+  const response = await fetch(uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error: uploadError } = await supabase.storage
+    .from('denuncias')
+    .upload(fileName, arrayBuffer, { contentType, upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('denuncias').getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
 export async function uploadAvatarImage(
   userId: string,
   uri: string,
