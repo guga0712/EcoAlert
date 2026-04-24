@@ -28,14 +28,16 @@ export default function LoginScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('a@a.com');
+  const [password, setPassword] = useState('12345678');
   const [nome, setNome] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const [nomeFocused, setNomeFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+
+
 
   function resetFields() {
     setEmail('');

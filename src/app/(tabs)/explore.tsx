@@ -6,16 +6,19 @@ import {
   Locate,
   MapPin,
   Plus,
+  Radiation,
   Trash2,
+  Trees,
   TriangleAlert,
+  Wind,
   Wrench,
   X,
 } from '@tamagui/lucide-icons-2';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Modal,
@@ -49,6 +52,12 @@ function getCategoryStyle(nome: string): { Icon: IconComponent; color: string } 
     return { Icon: TriangleAlert, color: '#795548' };
   if (n.includes('queimada') || n.includes('incendio'))
     return { Icon: Flame, color: '#bf360c' };
+  if (n.includes('poluicao'))
+    return { Icon: Wind, color: '#37474f' };
+  if (n.includes('desmatamento'))
+    return { Icon: Trees, color: '#21952f' };
+  if (n.includes('esgoto'))
+    return { Icon: Radiation, color: '#849521' };
   return { Icon: CircleAlert, color: '#37474f' };
 }
 
@@ -80,7 +89,14 @@ export default function MapsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
-  const { denuncias } = useDenuncias();
+  const { denuncias, mutate } = useDenuncias();
+
+  useFocusEffect(
+    useCallback(() => {
+      mutate();
+    }, [mutate])
+  );
+
   const [selected, setSelected] = useState<DenunciaWithCategoria | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const cardAnim = useRef(new Animated.Value(0)).current;

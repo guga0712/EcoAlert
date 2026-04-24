@@ -7,17 +7,20 @@ import {
   Leaf,
   MapPin,
   Pencil,
-  TriangleAlert,
+  Radiation,
   Trash2,
+  Trees,
+  TriangleAlert,
+  Wind,
   Wrench,
-  X,
+  X
 } from '@tamagui/lucide-icons-2';
-import type React from 'react';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -33,11 +36,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner } from 'tamagui';
 
+import { mutate as globalMutate } from 'swr';
+
 import { useCategorias } from '@/src/hooks/useCategorias';
-import { useDenuncias } from '@/src/hooks/useDenuncias';
 import { supabase } from '@/src/lib/supabase';
 import { createDenuncia } from '@/src/services/denuncias';
 import { uploadDenunciaImageFromUri } from '@/src/services/storage';
+import type { DenunciaWithCategoria } from '@/src/types/database';
+import { swrKeys } from '@/src/utils/swrKeys';
 
 type IconComponent = React.ComponentType<{ size?: number; color?: string }>;
 
@@ -55,6 +61,12 @@ function getCategoryStyle(nome: string): { Icon: IconComponent; color: string } 
     return { Icon: TriangleAlert, color: '#795548' };
   if (n.includes('queimada') || n.includes('incendio'))
     return { Icon: Flame, color: '#bf360c' };
+  if (n.includes('poluicao'))
+    return { Icon: Wind, color: '#37474f' };
+  if (n.includes('desmatamento'))
+    return { Icon: Trees, color: '#21952f' };
+  if (n.includes('esgoto'))
+    return { Icon: Radiation, color: '#849521' };
   return { Icon: CircleAlert, color: '#37474f' };
 }
 
@@ -62,7 +74,6 @@ export default function NovaOcorrenciaScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { categorias } = useCategorias();
-  const { mutate } = useDenuncias();
 
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
   const [titulo, setTitulo] = useState('');
@@ -160,7 +171,7 @@ export default function NovaOcorrenciaScreen() {
         }
       }
 
-      await createDenuncia({
+      const created = await createDenuncia({
         user_id: userId,
         categoria_id: selectedCatId,
         titulo: titulo.trim(),
@@ -171,7 +182,15 @@ export default function NovaOcorrenciaScreen() {
         foto_url: fotoUrl,
       });
 
-      await mutate();
+      const cat = categorias.find(c => c.id === selectedCatId) ?? null;
+      await globalMutate<DenunciaWithCategoria[]>(
+        swrKeys.denuncias,
+        (current = []) => [
+          { ...created, categorias: cat ? { id: cat.id, nome: cat.nome } : null },
+          ...current,
+        ],
+        { revalidate: false },
+      );
       router.back();
     } catch {
       Alert.alert('Erro', 'Não foi possível registrar a ocorrência.');
