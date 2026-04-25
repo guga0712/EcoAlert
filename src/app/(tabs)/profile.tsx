@@ -59,8 +59,7 @@ export default function ProfileScreen() {
       const publicUrl = await uploadAvatarImage(userId!, result.assets[0].uri);
       await updateProfile(userId!, { foto_url: publicUrl });
       await mutate();
-    } catch (error) {
-      console.log(error)
+    } catch {
       Alert.alert('Erro', 'Não foi possível atualizar o avatar.');
     } finally {
       setUploadingAvatar(false);

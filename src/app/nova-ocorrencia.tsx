@@ -1,26 +1,9 @@
-import {
-  Camera,
-  CircleAlert,
-  CircleX,
-  Droplets,
-  Flame,
-  Leaf,
-  MapPin,
-  Pencil,
-  Radiation,
-  Trash2,
-  Trees,
-  TriangleAlert,
-  Wind,
-  Wrench,
-  X
-} from '@tamagui/lucide-icons-2';
+import { Camera, CircleX, MapPin, Pencil, X } from '@tamagui/lucide-icons-2';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import type React from 'react';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -43,32 +26,8 @@ import { supabase } from '@/src/lib/supabase';
 import { createDenuncia } from '@/src/services/denuncias';
 import { uploadDenunciaImageFromUri } from '@/src/services/storage';
 import type { DenunciaWithCategoria } from '@/src/types/database';
+import { getCategoryStyle } from '@/src/utils/categories';
 import { swrKeys } from '@/src/utils/swrKeys';
-
-type IconComponent = React.ComponentType<{ size?: number; color?: string }>;
-
-function getCategoryStyle(nome: string): { Icon: IconComponent; color: string } {
-  const n = nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  if (n.includes('alagamento') || n.includes('enchente') || n.includes('inundacao'))
-    return { Icon: Droplets, color: '#1565c0' };
-  if (n.includes('arvore') || n.includes('vegeta') || n.includes('galho'))
-    return { Icon: Leaf, color: '#388e3c' };
-  if (n.includes('buraco') || n.includes('calcada') || n.includes('estrada') || n.includes('via'))
-    return { Icon: Wrench, color: '#e65100' };
-  if (n.includes('lixo') || n.includes('entulho') || n.includes('descarte'))
-    return { Icon: Trash2, color: '#6a1b9a' };
-  if (n.includes('deslizamento') || n.includes('erosao'))
-    return { Icon: TriangleAlert, color: '#795548' };
-  if (n.includes('queimada') || n.includes('incendio'))
-    return { Icon: Flame, color: '#bf360c' };
-  if (n.includes('poluicao'))
-    return { Icon: Wind, color: '#37474f' };
-  if (n.includes('desmatamento'))
-    return { Icon: Trees, color: '#21952f' };
-  if (n.includes('esgoto'))
-    return { Icon: Radiation, color: '#849521' };
-  return { Icon: CircleAlert, color: '#37474f' };
-}
 
 export default function NovaOcorrenciaScreen() {
   const router = useRouter();

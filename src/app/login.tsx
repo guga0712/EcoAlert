@@ -63,15 +63,10 @@ export default function LoginScreen() {
     }
 
     try {
-      const result = await signIn({ email, password });
-      console.log('Login:', result);
-      Alert.alert(
-        "Sucesso",
-        result.user?.email ? `Logado como ${result.user.email}` : "Login realizado com sucesso.",
-      );
+      await signIn({ email, password });
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert("Erro", 'Tente novamente');
+    } catch {
+      Alert.alert("Erro", 'E-mail ou senha incorretos. Tente novamente.');
     }
   }
 
@@ -92,16 +87,10 @@ export default function LoginScreen() {
     }
 
     try {
-      const result = await signUp({ nome, email, password });
-      console.log('Cadastro:', result);
-      Alert.alert(
-        "Sucesso",
-        result.user?.email ? `Conta criada para ${result.user.email}` : "Cadastro realizado com sucesso.",
-      );
+      await signUp({ nome, email, password });
       router.replace('/(tabs)');
-    } catch (error: any) {
-      console.error('Erro no cadastro:', error);
-      Alert.alert("Erro", 'Tente novamente');
+    } catch {
+      Alert.alert("Erro", 'Não foi possível criar a conta. Tente novamente.');
     }
   }
 
