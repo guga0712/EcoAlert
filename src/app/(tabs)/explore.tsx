@@ -1,4 +1,5 @@
 import { Locate, MapPin, Plus, X } from '@tamagui/lucide-icons-2';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -242,6 +243,17 @@ export default function MapsScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 4 }}>
+              {selected.foto_url && (
+                <>
+                  <Image
+                    source={{ uri: selected.foto_url }}
+                    style={styles.detailImage}
+                    contentFit="cover"
+                  />
+                  <View style={styles.divider} />
+                </>
+              )}
+
               {/* Status */}
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Status</Text>
@@ -556,6 +568,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 6,
     flex: 1,
+  },
+  detailImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 4,
   },
   fab: {
     position: 'absolute',

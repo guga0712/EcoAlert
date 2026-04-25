@@ -151,7 +151,9 @@ export default function NovaOcorrenciaScreen() {
         { revalidate: false },
       );
       router.back();
-    } catch {
+    } catch (error) {
+      console.log(error);
+
       Alert.alert('Erro', 'Não foi possível registrar a ocorrência.');
     } finally {
       setSaving(false);
