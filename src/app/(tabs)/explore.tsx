@@ -16,7 +16,7 @@ import {
 } from '@tamagui/lucide-icons-2';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -90,12 +90,32 @@ export default function MapsScreen() {
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const { denuncias, mutate } = useDenuncias();
+  const { focusLat, focusLng, focusAt } = useLocalSearchParams<{
+    focusLat?: string;
+    focusLng?: string;
+    focusAt?: string;
+  }>();
 
   useFocusEffect(
     useCallback(() => {
       mutate();
     }, [mutate])
   );
+
+  useEffect(() => {
+    if (!focusLat || !focusLng) return;
+    const timeout = setTimeout(() => {
+      mapRef.current?.animateToRegion({
+        latitude: parseFloat(focusLat),
+        longitude: parseFloat(focusLng),
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      });
+    }, 350);
+    return () => clearTimeout(timeout);
+  // focusAt muda a cada toque garantindo que o efeito sempre dispara
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusAt]);
 
   const [selected, setSelected] = useState<DenunciaWithCategoria | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);

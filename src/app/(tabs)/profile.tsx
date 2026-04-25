@@ -1,7 +1,8 @@
-import { Camera, Pencil } from '@tamagui/lucide-icons-2';
+import { Camera, LogOut, Pencil } from '@tamagui/lucide-icons-2';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Label, Spinner, Text, View, XStack, YStack } from 'tamagui';
@@ -9,10 +10,12 @@ import { Button, Label, Spinner, Text, View, XStack, YStack } from 'tamagui';
 import Header from '@/src/components/Header';
 import { useProfile } from '@/src/hooks/useProfile';
 import { supabase } from '@/src/lib/supabase';
+import { signOut } from '@/src/services/auth';
 import { updateProfile } from '@/src/services/profiles';
 import { uploadAvatarImage } from '@/src/services/storage';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | undefined>();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -84,6 +87,24 @@ export default function ProfileScreen() {
   function handleCancelEdit() {
     setNomeEdit(profile?.nome ?? '');
     setEditing(false);
+  }
+
+  async function handleLogout() {
+    Alert.alert('Sair', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut();
+            router.replace('/login');
+          } catch {
+            Alert.alert('Erro', 'Não foi possível sair. Tente novamente.');
+          }
+        },
+      },
+    ]);
   }
 
   const avatarUri = profile?.foto_url ?? null;
@@ -279,6 +300,23 @@ export default function ProfileScreen() {
               </XStack>
             </Button>
           )}
+
+          {/* Logout */}
+          <Button
+            size="$5"
+            onPress={handleLogout}
+            backgroundColor="#fff"
+            borderRadius={14}
+            height={54}
+            borderWidth={1.5}
+            borderColor="#ffcdd2"
+            pressStyle={{ opacity: 0.85, backgroundColor: '#fff8f8' }}
+          >
+            <XStack alignItems="center" gap="$2">
+              <LogOut size={16} color="#c62828" />
+              <Text color="#c62828" fontWeight="600" fontSize={16}>Sair da conta</Text>
+            </XStack>
+          </Button>
 
         </YStack>
       </KeyboardAvoidingView>
