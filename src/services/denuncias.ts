@@ -33,19 +33,15 @@ export async function createDenuncia(
 export async function updateDenunciaStatus(
   denunciaId: string,
   status: DenunciaStatus
-): Promise<Denuncia> {
-  const { data, error } = await supabase
+): Promise<void> {
+  const { error } = await supabase
     .from('denuncias')
     .update({ status })
     .eq('id', denunciaId)
-    .select()
-    .single()
 
   if (error) {
     throw error
   }
-
-  return data as Denuncia
 }
 
 export async function deleteDenuncia(denunciaId: string): Promise<void> {

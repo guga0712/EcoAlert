@@ -7,13 +7,13 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Text as NText,
+  View as NView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
-  Text as NText,
-  View as NView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { mutate as globalMutate } from 'swr';
@@ -24,7 +24,7 @@ import { useMyDenuncias } from '@/src/hooks/useMyDenuncias';
 import { useProfile } from '@/src/hooks/useProfile';
 import { supabase } from '@/src/lib/supabase';
 import { signOut } from '@/src/services/auth';
-import { deleteDenuncia, updateDenunciaStatus } from '@/src/services/denuncias';
+import { deleteDenuncia } from '@/src/services/denuncias';
 import { updateProfile } from '@/src/services/profiles';
 import { uploadAvatarImage } from '@/src/services/storage';
 import type { DenunciaStatus, DenunciaWithCategoria } from '@/src/types/database';
@@ -151,13 +151,15 @@ export default function ProfileScreen() {
   }
 
   async function doUpdateStatus(id: string, status: DenunciaStatus) {
-    try {
-      await updateDenunciaStatus(id, status);
-      await mutateMyDenuncias();
-      await globalMutate(swrKeys.denuncias);
-    } catch {
-      Alert.alert('Erro', 'Não foi possível alterar o status.');
-    }
+    await mutateMyDenuncias(
+      (current = []) => current.map(d => d.id === id ? { ...d, status } : d),
+      { revalidate: false },
+    );
+    await globalMutate<DenunciaWithCategoria[]>(
+      swrKeys.denuncias,
+      (current = []) => current.map(d => d.id === id ? { ...d, status } : d),
+      { revalidate: false },
+    );
   }
 
   function handleDelete(d: DenunciaWithCategoria) {
