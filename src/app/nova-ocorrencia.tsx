@@ -148,12 +148,11 @@ export default function NovaOcorrenciaScreen() {
           { ...created, categorias: cat ? { id: cat.id, nome: cat.nome } : null },
           ...current,
         ],
-        { revalidate: false },
+        { revalidate: true },
       );
+      await globalMutate(swrKeys.myDenuncias(userId));
       router.back();
-    } catch (error) {
-      console.log(error);
-
+    } catch {
       Alert.alert('Erro', 'Não foi possível registrar a ocorrência.');
     } finally {
       setSaving(false);
